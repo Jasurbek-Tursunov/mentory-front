@@ -9,7 +9,7 @@ declare global {
 
     interface TelegramWebApp {
         initData: string
-        initDataUnsafe: any
+        initDataUnsafe: Record<string, unknown>
         version: string
         platform: string
         colorScheme: 'light' | 'dark'
