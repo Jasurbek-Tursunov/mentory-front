@@ -2,38 +2,43 @@
 
 import { useEffect, useState } from 'react'
 
-type Theme = {
-    textColor?: string
-    bgColor?: string
-    buttonColor?: string
-    buttonTextColor?: string
-    theme: 'light' | 'dark'
+type TelegramResult = {
+    isTelegram: boolean
+    tg: TelegramWebApp | null
 }
 
-export function useTelegram() {
-    const [tg, setTg] = useState<Window['Telegram']['WebApp']>()
-    const [theme, setTheme] = useState<Theme>({
-        theme: 'light',
-    })
+export function useTelegram(): TelegramResult {
+    const [tg, setTg] = useState<TelegramWebApp | null>(null)
+    const [isTelegram, setIsTelegram] = useState(false)
 
     useEffect(() => {
-        if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-            const webApp = window.Telegram.WebApp
+        const isInsideTelegram = typeof window !== 'undefined' &&
+            window.Telegram?.WebApp !== undefined
 
+        setIsTelegram(isInsideTelegram)
+
+        if (isInsideTelegram) {
+            const webApp = window.Telegram!.WebApp
             webApp.ready()
             webApp.expand()
-
             setTg(webApp)
-
-            setTheme({
-                textColor: webApp.themeParams.text_color,
-                bgColor: webApp.themeParams.bg_color,
-                buttonColor: webApp.themeParams.button_color,
-                buttonTextColor: webApp.themeParams.button_text_color,
-                theme: webApp.colorScheme === 'dark' ? 'dark' : 'light',
-            })
+        } else {
+            // Если не Telegram — подгружаем SDK
+            const script = document.createElement('script')
+            script.src = 'https://telegram.org/js/telegram-web-app.js'
+            script.async = true
+            script.onload = () => {
+                if (window.Telegram?.WebApp) {
+                    const webApp = window.Telegram.WebApp
+                    webApp.ready()
+                    webApp.expand()
+                    setIsTelegram(true)
+                    setTg(webApp)
+                }
+            }
+            document.head.appendChild(script)
         }
     }, [])
 
-    return { tg, theme }
+    return { isTelegram, tg }
 }
